@@ -22,6 +22,7 @@ module Sandbox
       @root = Context.new(:root)
       @path = []
       @running = false
+      @reading = false
 
       add_command_help if options.fetch(:builtin_help, true)
       add_command_quit if options.fetch(:builtin_quit, true)
@@ -35,7 +36,9 @@ module Sandbox
       while @running
         raise ShellError, "Root context doesn't exist" if @root.nil?
 
+        @reading = true
         line = Readline.readline("#{formatted_path}#{@prompt}", @history)
+        @reading = false
         break if line.nil?
 
         line.strip!
@@ -55,7 +58,9 @@ module Sandbox
     end
 
     def puts(data = '')
+      @output.print("\e[1G\e[2K") if @reading
       @output.puts(data)
+      Readline.refresh_line if @reading
     end
 
     def formatted_path
