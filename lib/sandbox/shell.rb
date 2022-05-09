@@ -42,7 +42,10 @@ module Sandbox
         break if line.nil?
 
         line.strip!
-        next if line.empty?
+        if line.empty?
+          Readline::HISTORY.pop
+          next
+        end
 
         tokens = split_tokens(line)
         @root.context(*@path).exec(self, tokens)
@@ -58,7 +61,7 @@ module Sandbox
     end
 
     def puts(data = '')
-      @output.print("\e[1G\e[2K") if @reading
+      @output.print("\e[0G\e[J") if @reading
       @output.puts(data)
       Readline.refresh_line if @reading
     end
