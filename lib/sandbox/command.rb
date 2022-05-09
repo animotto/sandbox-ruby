@@ -4,6 +4,7 @@ module Sandbox
   ##
   # Command
   class Command
+    attr_reader :completion_proc
     attr_accessor :name, :description, :global, :aliases
 
     def initialize(name, block, **options)
@@ -12,10 +13,16 @@ module Sandbox
       @description = options[:description]
       @global = options[:global]
       @aliases = options[:aliases]&.map(&:to_sym)
+
+      @completion_proc = nil
     end
 
     def exec(shell, context, tokens)
       @block.call(shell, context, tokens)
+    end
+
+    def completion(&block)
+      @completion_proc = block
     end
 
     def global?

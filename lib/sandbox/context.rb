@@ -4,7 +4,13 @@ module Sandbox
   ##
   # Context
   class Context
-    attr_reader :contexts, :commands
+    INVALID_CHARS = [
+      '/',
+      '.',
+      '\s'
+    ].freeze
+
+    attr_reader :contexts, :commands, :completion_proc
     attr_accessor :name, :description
 
     def initialize(name, **options)
@@ -13,14 +19,15 @@ module Sandbox
 
       @contexts = []
       @commands = []
+      @completion_proc = nil
     end
 
     def add_context(name, **options)
-      raise ArgumentError, "Context #{name} contains invalid characters" if name =~ %r{[/.\s]}
+      raise ContextError, "Context #{name} contains invalid characters" if name =~ /[#{INVALID_CHARS.join}]/
 
       name = name.downcase.to_sym
       commands = @contexts.select { |c| c.name == name }
-      raise ArgumentError, "Context #{name} already exists in context #{self}" unless commands.empty?
+      raise ContextError, "Context #{name} already exists in context #{self}" unless commands.empty?
 
       context = Context.new(name, **options)
       @contexts << context
@@ -30,17 +37,17 @@ module Sandbox
     def remove_context(name)
       name = name.downcase.to_sym
       commands = @contexts.select { |c| c.name == name }
-      raise ArgumentError, "Context #{name} doesn't exists in context #{self}" if commands.empty?
+      raise ContextError, "Context #{name} doesn't exists in context #{self}" if commands.empty?
 
       @contexts.delete_if { |c| c.name == name }
     end
 
     def add_command(name, **options, &block)
-      raise ArgumentError, "Command #{name} contains invalid characters" if name =~ %r{[/.\s]}
+      raise ContextError, "Command #{name} contains invalid characters" if name =~ /[#{INVALID_CHARS.join}]/
 
       name = name.downcase.to_sym
       commands = @commands.select { |c| c.name == name }
-      raise ArgumentError, "Command #{name} already exists in context #{self}" unless commands.empty?
+      raise ContextError, "Command #{name} already exists in context #{self}" unless commands.empty?
 
       command = Command.new(name, block, **options)
       @commands << command
@@ -50,13 +57,18 @@ module Sandbox
     def remove_command(name)
       name = name.downcase.to_sym
       commands = @commands.select { |c| c.name == command.name }
-      raise ArgumentError, "Command #{name} doesn't exists in context #{self}" if commands.empty?
+      raise ContextError, "Command #{name} doesn't exists in context #{self}" if commands.empty?
 
       @commands.delete_if { |c| c.name == name }
     end
 
     def exec(shell, tokens)
       path = tokens.first.split('/')
+      if path.empty?
+        shell.path.clear
+        return
+      end
+
       path_prev = shell.path.clone
       shell.path.clear if tokens.first.start_with?('/')
       if path.length > 1
@@ -108,6 +120,7 @@ module Sandbox
       return self if path.empty?
 
       path.map!(&:downcase)
+      path.map!(&:to_sym)
       context = nil
       current = self
       path.each do |p|
@@ -123,4 +136,8 @@ module Sandbox
       @name.to_s
     end
   end
+
+  ##
+  # Context error
+  class ContextError < StandardError; end
 end

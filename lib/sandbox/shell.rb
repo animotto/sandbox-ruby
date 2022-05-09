@@ -23,13 +23,14 @@ module Sandbox
       @path = []
       @running = false
 
-      add_command_help
-      add_command_quit
-      add_command_pwd
+      add_command_help if options.fetch(:builtin_help, true)
+      add_command_quit if options.fetch(:builtin_quit, true)
+      add_command_pwd if options.fetch(:builtin_pwd, true)
     end
 
     def run
       puts(@banner)
+      Readline.completion_proc = proc { |line| completion_proc(line) }
       @running = true
       while @running
         raise ShellError, "Root context doesn't exist" if @root.nil?
@@ -40,8 +41,7 @@ module Sandbox
         line.strip!
         next if line.empty?
 
-        tokens = line.split(/\s+/)
-        tokens[0].downcase!
+        tokens = split_tokens(line)
         @root.context(*@path).exec(self, tokens)
       end
     end
@@ -63,6 +63,27 @@ module Sandbox
     end
 
     private
+
+    def split_tokens(line)
+      tokens = line.split(/\s+/)
+      tokens.first&.downcase!
+      tokens
+    end
+
+    def completion_proc(line)
+      tokens = split_tokens(Readline.line_buffer)
+
+      commands = []
+      commands += @root.context(*@path).contexts
+      commands += @root.context(*@path).commands
+      commands += @root.commands.select(&:global?) unless @path.empty?
+
+      command = commands.detect { |c| c.name.to_s == tokens.first }
+      list = commands.map(&:name)
+      list = command.completion_proc&.call(self, tokens, line) unless command.nil?
+
+      list&.grep(/^#{Regexp.escape(line)}/)
+    end
 
     def add_command_help
       @root.add_command(:help, aliases: ['?'], global: true, description: 'This help') do |shell|
@@ -98,6 +119,6 @@ module Sandbox
   end
 
   ##
-  # ShellError
+  # Shell error
   class ShellError < StandardError; end
 end
