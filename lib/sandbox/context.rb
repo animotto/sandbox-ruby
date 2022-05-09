@@ -16,17 +16,19 @@ module Sandbox
     end
 
     def add_context(name, **options)
-      raise ArgumentError, "Context #{name} shouldn't contain slashes and dots" if name =~ %r{[/.]}
+      raise ArgumentError, "Context #{name} contains invalid characters" if name =~ %r{[/.\s]}
 
-      name = name.to_sym
+      name = name.downcase.to_sym
       commands = @contexts.select { |c| c.name == name }
       raise ArgumentError, "Context #{name} already exists in context #{self}" unless commands.empty?
 
-      @contexts << Context.new(name, **options)
+      context = Context.new(name, **options)
+      @contexts << context
+      context
     end
 
     def remove_context(name)
-      name = name.to_sym
+      name = name.downcase.to_sym
       commands = @contexts.select { |c| c.name == name }
       raise ArgumentError, "Context #{name} doesn't exists in context #{self}" if commands.empty?
 
@@ -34,17 +36,19 @@ module Sandbox
     end
 
     def add_command(name, **options, &block)
-      raise ArgumentError, "Command #{name} shouldn't contain slashes and dots" if name =~ %r{[/.]}
+      raise ArgumentError, "Command #{name} contains invalid characters" if name =~ %r{[/.\s]}
 
-      name = name.to_sym
+      name = name.downcase.to_sym
       commands = @commands.select { |c| c.name == name }
       raise ArgumentError, "Command #{name} already exists in context #{self}" unless commands.empty?
 
-      @commands << Command.new(name, block, **options)
+      command = Command.new(name, block, **options)
+      @commands << command
+      command
     end
 
     def remove_command(name)
-      name = name.to_sym
+      name = name.downcase.to_sym
       commands = @commands.select { |c| c.name == command.name }
       raise ArgumentError, "Command #{name} doesn't exists in context #{self}" if commands.empty?
 
@@ -54,10 +58,7 @@ module Sandbox
     def exec(shell, tokens)
       path = tokens.first.split('/')
       path_prev = shell.path.clone
-      if tokens.first.start_with?('/')
-        shell.path.clear
-        path.unshift('')
-      end
+      shell.path.clear if tokens.first.start_with?('/')
       if path.length > 1
         path[0..-2].each do |p|
           if p == '..'
@@ -106,6 +107,7 @@ module Sandbox
     def context(*path)
       return self if path.empty?
 
+      path.map!(&:downcase)
       context = nil
       current = self
       path.each do |p|

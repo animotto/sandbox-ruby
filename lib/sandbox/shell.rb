@@ -34,7 +34,7 @@ module Sandbox
       while @running
         raise ShellError, "Root context doesn't exist" if @root.nil?
 
-        line = Readline.readline("#{formatted_path}#{DEFAULT_PROMPT}", @history)
+        line = Readline.readline("#{formatted_path}#{@prompt}", @history)
         break if line.nil?
 
         line.strip!
