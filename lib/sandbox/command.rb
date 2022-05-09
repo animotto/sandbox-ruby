@@ -18,7 +18,7 @@ module Sandbox
     end
 
     def exec(shell, context, tokens)
-      @block.call(shell, context, tokens)
+      @block&.call(shell, context, tokens)
     end
 
     def completion(&block)

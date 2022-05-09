@@ -23,11 +23,11 @@ module Sandbox
     end
 
     def add_context(name, **options)
-      raise ContextError, "Context #{name} contains invalid characters" if name =~ /[#{INVALID_CHARS.join}]/
+      raise ContextError, "Context #{name} contains invalid characters" if invalid_chars?(name)
 
       name = name.downcase.to_sym
-      commands = @contexts.select { |c| c.name == name }
-      raise ContextError, "Context #{name} already exists in context #{self}" unless commands.empty?
+      raise ContextError, "Context #{name} already exists in context #{self}" if context?(name)
+      raise ContextError, "Command #{name} already exists in context #{self}" if command?(name)
 
       context = Context.new(name, **options)
       @contexts << context
@@ -36,18 +36,17 @@ module Sandbox
 
     def remove_context(name)
       name = name.downcase.to_sym
-      commands = @contexts.select { |c| c.name == name }
-      raise ContextError, "Context #{name} doesn't exists in context #{self}" if commands.empty?
+      raise ContextError, "Context #{name} doesn't exists in context #{self}" unless context?(name)
 
       @contexts.delete_if { |c| c.name == name }
     end
 
     def add_command(name, **options, &block)
-      raise ContextError, "Command #{name} contains invalid characters" if name =~ /[#{INVALID_CHARS.join}]/
+      raise ContextError, "Command #{name} contains invalid characters" if invalid_chars?(name)
 
       name = name.downcase.to_sym
-      commands = @commands.select { |c| c.name == name }
-      raise ContextError, "Command #{name} already exists in context #{self}" unless commands.empty?
+      raise ContextError, "Context #{name} already exists in context #{self}" if context?(name)
+      raise ContextError, "Command #{name} already exists in context #{self}" if command?(name)
 
       command = Command.new(name, block, **options)
       @commands << command
@@ -56,8 +55,7 @@ module Sandbox
 
     def remove_command(name)
       name = name.downcase.to_sym
-      commands = @commands.select { |c| c.name == command.name }
-      raise ContextError, "Command #{name} doesn't exists in context #{self}" if commands.empty?
+      raise ContextError, "Command #{name} doesn't exists in context #{self}" unless command?(name)
 
       @commands.delete_if { |c| c.name == name }
     end
@@ -134,6 +132,20 @@ module Sandbox
 
     def to_s
       @name.to_s
+    end
+
+    private
+
+    def context?(name)
+      @contexts.any? { |c| c.name == name }
+    end
+
+    def command?(name)
+      @commands.any? { |c| c.name == name }
+    end
+
+    def invalid_chars?(name)
+      name =~ /[#{INVALID_CHARS.join}]/
     end
   end
 
