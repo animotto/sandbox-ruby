@@ -40,13 +40,18 @@ module Sandbox
           @reading = true
           line = Readline.readline("#{formatted_path}#{@prompt}", @history)
           @reading = false
-          break if line.nil?
+          if line.nil?
+            puts
+            break
+          end
 
           line.strip!
           if line.empty?
             Readline::HISTORY.pop
             next
           end
+
+          Readline::HISTORY.pop if Readline::HISTORY.length >= 2 && Readline::HISTORY[-2] == line
 
           tokens = split_tokens(line)
           @root.context(*@path).exec(self, tokens)
@@ -105,11 +110,21 @@ module Sandbox
         list.sort! { |a, b| a.name <=> b.name }
         list = @root.context(*@path).contexts.sort { |a, b| a.name <=> b.name } + list
         list.each do |c|
-          name = c.instance_of?(Context) ? "[#{c.name}]" : c.name
+          if c.instance_of?(Context)
+            shell.puts(
+              format(
+                ' %<name>-25s %<description>s',
+                name: "[#{c.name}]",
+                description: c.description
+              )
+            )
+            next
+          end
+
           shell.puts(
             format(
-              ' %<name>-15s%<description>s',
-              name: name,
+              ' %<name>-25s %<description>s',
+              name: "#{c.name} #{c.params.keys.join(' ')}",
               description: c.description
             )
           )
