@@ -37,21 +37,14 @@ module Sandbox
         raise ShellError, "Root context doesn't exist" if @root.nil?
 
         begin
-          @reading = true
-          line = Readline.readline("#{formatted_path}#{@prompt}", @history)
-          @reading = false
+          line = readline("#{formatted_path}#{@prompt}", @history)
           if line.nil?
             puts
             break
           end
 
           line.strip!
-          if line.empty?
-            Readline::HISTORY.pop
-            next
-          end
-
-          Readline::HISTORY.pop if Readline::HISTORY.length >= 2 && Readline::HISTORY[-2] == line
+          next if line.empty?
 
           tokens = split_tokens(line)
           @root.context(*@path).exec(self, tokens)
@@ -59,6 +52,15 @@ module Sandbox
           @output.print("\e[0G\e[J")
         end
       end
+    end
+
+    def readline(prompt, history)
+      @reading = true
+      line = Readline.readline(prompt, history)
+      Readline::HISTORY.pop if line&.strip&.empty?
+      Readline::HISTORY.pop if Readline::HISTORY.length >= 2 && Readline::HISTORY[-2] == line
+      @reading = false
+      line
     end
 
     def stop
