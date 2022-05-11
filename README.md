@@ -81,7 +81,7 @@ command_counter = shell.add_command(
   params: ['<n>'] # Mandatory parameter
 ) do |shell, context, tokens|
   n = tokens[1].to_i
-  n.times { |i| shell.print("#{i} ") }
+  n.times { |i| shell.print("#{i + 1} ") }
   shell.puts
 end
 
@@ -106,7 +106,7 @@ context_fruit.add_command(
   :apple,
   description: 'Apple'
 ) do |shell, context, tokens|
-  shell.puts("I'm an apple!")
+  shell.puts("I'm and apple!")
 end
 
 # You can define aliases for your command
@@ -122,10 +122,10 @@ end
 shell.add_context(:vegetable, description: 'Vegetables')
 shell.context(:vegetable).add_context(:tasty)
 shell.context(:vegetable, :tasty).add_command(:potato) do |shell, context, tokens|
-  shell.puts("Yammy!")
+  shell.puts('Yammy!')
 end
 shell.command(:vegetable, :tasty, :potato).completion do |shell, tokens, line|
-  ['one', 'two']
+  %w[one two]
 end
 
 # You can remove a context or command at any time
@@ -137,3 +137,6 @@ shell.remove_context(:useless)
 # Run the shell
 shell.run
 ```
+## License
+
+See the [LICENSE](LICENSE) file

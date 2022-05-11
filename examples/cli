@@ -21,7 +21,7 @@ command_counter = shell.add_command(
   params: ['<n>'] # Mandatory parameter
 ) do |shell, context, tokens|
   n = tokens[1].to_i
-  n.times { |i| shell.print("#{i} ") }
+  n.times { |i| shell.print("#{i + 1} ") }
   shell.puts
 end
 
@@ -62,10 +62,10 @@ end
 shell.add_context(:vegetable, description: 'Vegetables')
 shell.context(:vegetable).add_context(:tasty)
 shell.context(:vegetable, :tasty).add_command(:potato) do |shell, context, tokens|
-  shell.puts("Yammy!")
+  shell.puts('Yammy!')
 end
 shell.command(:vegetable, :tasty, :potato).completion do |shell, tokens, line|
-  ['one', 'two']
+  %w[one two]
 end
 
 # You can remove a context or command at any time
