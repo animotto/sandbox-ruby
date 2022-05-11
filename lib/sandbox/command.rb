@@ -7,8 +7,12 @@ module Sandbox
     attr_reader :completion_proc, :aliases, :params
     attr_accessor :name, :description, :global
 
-    def initialize(name, block, **options)
+    ##
+    # Creates a new command
+    def initialize(name, shell, context, block, **options)
       @name = name.to_sym
+      @shell = shell
+      @context = context
       @block = block
       @description = options[:description]
       @global = options[:global]
@@ -28,27 +32,47 @@ module Sandbox
       @completion_proc = nil
     end
 
-    def exec(shell, context, tokens)
+    ##
+    # Executes the command
+    def exec(tokens)
       mandatory = @params.count { |_, v| v }
       if mandatory > (tokens.length - 1)
-        shell.print("Usage: #{@name} ")
-        shell.puts(params.keys.join(' '))
+        print_usage
         return
       end
 
-      @block&.call(shell, context, tokens)
+      @block&.call(@shell, @context, tokens)
     end
 
+    ##
+    # Sets a block for the readline auto completion
     def completion(&block)
       @completion_proc = block
     end
 
+    ##
+    # Returns true if the command is global
     def global?
       @global
     end
 
+    ##
+    # Returns the string representation of the command
     def to_s
       @name.to_s
+    end
+
+    ##
+    # Returns true if the name matches the command name or alias
+    def match?(name)
+      @name.to_s == name || @aliases&.map(&:to_s)&.include?(name)
+    end
+
+    ##
+    # Prints command usage
+    def print_usage
+      @shell.print("Usage: #{@name} ")
+      @shell.puts(params.keys.join(' '))
     end
   end
 end

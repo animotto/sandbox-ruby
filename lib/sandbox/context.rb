@@ -13,8 +13,11 @@ module Sandbox
     attr_reader :contexts, :commands, :completion_proc
     attr_accessor :name, :description
 
-    def initialize(name, **options)
+    ##
+    # Creates a new context
+    def initialize(name, shell, **options)
       @name = name.to_sym
+      @shell = shell
       @description = options[:description]
 
       @contexts = []
@@ -22,6 +25,8 @@ module Sandbox
       @completion_proc = nil
     end
 
+    ##
+    # Adds a new context to the current context
     def add_context(name, **options)
       raise ContextError, "Context #{name} contains invalid characters" if invalid_chars?(name)
 
@@ -29,11 +34,13 @@ module Sandbox
       raise ContextError, "Context #{name} already exists in context #{self}" if context?(name)
       raise ContextError, "Command #{name} already exists in context #{self}" if command?(name)
 
-      context = Context.new(name, **options)
+      context = Context.new(name, @shell, **options)
       @contexts << context
       context
     end
 
+    ##
+    # Removes a context from the current context
     def remove_context(name)
       name = name.downcase.to_sym
       raise ContextError, "Context #{name} doesn't exists in context #{self}" unless context?(name)
@@ -41,6 +48,8 @@ module Sandbox
       @contexts.delete_if { |c| c.name == name }
     end
 
+    ##
+    # Adds a command to the current context
     def add_command(name, **options, &block)
       raise ContextError, "Command #{name} contains invalid characters" if invalid_chars?(name)
 
@@ -48,18 +57,22 @@ module Sandbox
       raise ContextError, "Context #{name} already exists in context #{self}" if context?(name)
       raise ContextError, "Command #{name} already exists in context #{self}" if command?(name)
 
-      command = Command.new(name, block, **options)
+      command = Command.new(name, @shell, self, block, **options)
       @commands << command
       command
     end
 
+    ##
+    # Removes a command from the current context
     def remove_command(name)
       name = name.downcase.to_sym
       raise ContextError, "Command #{name} doesn't exists in context #{self}" unless command?(name)
 
-      @commands.delete_if { |c| c.name == name }
+      @commands.delete_if { |c| c.match?(name) }
     end
 
+    ##
+    # Executes the command in the current context
     def exec(shell, tokens)
       path = tokens.first.split('/')
       if path.empty?
@@ -103,9 +116,9 @@ module Sandbox
       commands += current.commands
       commands += shell.root.commands.select(&:global?)
       commands.each do |command|
-        next unless command.name.to_s == path.last || command.aliases&.detect { |a| a.to_s == path.last }
+        next unless command.match?(path.last)
 
-        command.exec(shell, self, tokens)
+        command.exec(tokens)
         shell.path = path_prev
         return nil
       end
@@ -114,6 +127,8 @@ module Sandbox
       shell.path = path_prev
     end
 
+    ##
+    # Returns a context by the path
     def context(*path)
       return self if path.empty?
 
@@ -130,20 +145,28 @@ module Sandbox
       context
     end
 
+    ##
+    # Returns the string representation of the context
     def to_s
       @name.to_s
     end
 
     private
 
+    ##
+    # Returns true if the context exists in the current context
     def context?(name)
       @contexts.any? { |c| c.name == name }
     end
 
+    ##
+    # Returns true if the command exists in the current context
     def command?(name)
-      @commands.any? { |c| c.name == name }
+      @commands.any? { |c| c.match?(name) }
     end
 
+    ##
+    # Returns true if the name contains invalid characters
     def invalid_chars?(name)
       name =~ /[#{INVALID_CHARS.join}]/
     end
