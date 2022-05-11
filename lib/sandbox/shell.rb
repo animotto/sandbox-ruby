@@ -50,12 +50,18 @@ module Sandbox
           line.strip!
           next if line.empty?
 
-          tokens = split_tokens(line)
-          @root.context(*@path).exec(self, tokens)
+          exec(line)
         rescue Interrupt
           @output.print("\e[0G\e[J")
         end
       end
+    end
+
+    ##
+    # Executes command
+    def exec(line)
+      tokens = split_tokens(line)
+      @root.context(*@path).exec(self, tokens)
     end
 
     ##
