@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'readline'
+require 'shellwords'
 
 module Sandbox
   ##
@@ -9,7 +10,8 @@ module Sandbox
     DEFAULT_PROMPT = '> '
     DEFAULT_BANNER = 'Sandbox shell'
 
-    attr_accessor :prompt, :banner, :root, :path
+    attr_reader :root
+    attr_accessor :prompt, :banner, :path
 
     ##
     # Creates a new shell
@@ -38,8 +40,6 @@ module Sandbox
       Readline.completion_proc = proc { |line| completion_proc(line) }
       @running = true
       while @running
-        raise ShellError, "Root context doesn't exist" if @root.nil?
-
         begin
           line = readline("#{formatted_path}#{@prompt}", @history)
           if line.nil?
@@ -51,8 +51,11 @@ module Sandbox
           next if line.empty?
 
           exec(line)
+        rescue ShellError => e
+          puts(e)
+          retry
         rescue Interrupt
-          @output.print("\e[0G\e[J")
+          print("\e[0G\e[J")
         end
       end
     end
@@ -142,9 +145,11 @@ module Sandbox
     ##
     # Returns an array of tokens from the line
     def split_tokens(line)
-      tokens = line.split(/\s+/)
+      tokens = line.shellsplit
       tokens.first&.downcase!
       tokens
+    rescue ArgumentError => e
+      raise ShellError, e
     end
 
     ##
