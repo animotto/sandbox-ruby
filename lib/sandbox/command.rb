@@ -65,7 +65,8 @@ module Sandbox
     ##
     # Returns true if the name matches the command name or alias
     def match?(name)
-      @name.to_s == name || @aliases&.map(&:to_s)&.include?(name)
+      name = name&.to_sym
+      @name == name || @aliases&.include?(name)
     end
 
     ##

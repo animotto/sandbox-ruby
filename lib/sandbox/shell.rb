@@ -95,6 +95,42 @@ module Sandbox
       "/#{@path.join('/')}"
     end
 
+    ##
+    # Adds a new context to the root context
+    def add_context(name, **options)
+      @root.add_context(name, **options)
+    end
+
+    ##
+    # Removes a context from the root context
+    def remove_context(name)
+      @root.remove_context(name)
+    end
+
+    ##
+    # Adds a command to the root context
+    def add_command(name, **options, &block)
+      @root.add_command(name, **options, &block)
+    end
+    ##
+
+    # Removes a command from the root context
+    def remove_command(name)
+      @root.remove_command(name)
+    end
+
+    ##
+    # Returns a context by the path from the root context
+    def context(*path)
+      @root.context(*path)
+    end
+
+    ##
+    # Returns a command by the path from the root context
+    def command(*path)
+      @root.command(*path)
+    end
+
     private
 
     ##

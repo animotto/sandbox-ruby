@@ -34,9 +34,8 @@ module Sandbox
       raise ContextError, "Context #{name} already exists in context #{self}" if context?(name)
       raise ContextError, "Command #{name} already exists in context #{self}" if command?(name)
 
-      context = Context.new(name, @shell, **options)
-      @contexts << context
-      context
+      @contexts << Context.new(name, @shell, **options)
+      @contexts.last
     end
 
     ##
@@ -143,6 +142,15 @@ module Sandbox
         current = context
       end
       context
+    end
+
+    ##
+    # Returns a command by the path
+    def command(*path)
+      return if path.empty?
+
+      context = context(*path[0..-2])
+      context.commands.detect { |c| c.match?(path.last) }
     end
 
     ##
