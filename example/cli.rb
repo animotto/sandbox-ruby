@@ -1,67 +1,7 @@
-# Sandbox shell library for Ruby
+#!/usr/bin/env ruby
 
-![GitHub](https://img.shields.io/github/license/animotto/sandbox-ruby)
-[![Tests](https://github.com/animotto/sandbox-ruby/actions/workflows/tests.yml/badge.svg)](https://github.com/animotto/sandbox-ruby/actions/workflows/tests.yml)
+# frozen_string_literal: true
 
-## Overview
-
-The sandbox shell library provides a simple interface for creating a REPL (Read/Eval/Print/Loop) CLI (command line interface)
-
-## Installation
-
-Add to your Gemfile:
-
-```ruby
-gem 'sandbox-ruby'
-```
-
-And install it:
-
-```console
-bundle install
-```
-
-Or install it manually:
-
-```console
-bundle install sandbox-ruby
-```
-
-## Primitives
-
-There are a few primitives:
-
-`Shell` is the main class
-
-`Context` provides a hierarchical structure for your CLI (like directories in the filesystem)
-
-`Command` is the endpoint for your commands
-
-## Navigation in the CLI
-
-`/` Go to root context
-
-`..` Go to parent context
-
-`../..` Go to parent context by 2 levels down
-
-`/fruit/apple` Executes command *apple* in the context *fruit*
-
-`/vegetable/tasty` Go to context *tasty*
-
-## Built-in commands
-
-There are built-in commands:
-
-`help` `?` Prints all commands and their descriptions in the current context
-
-`path` Prints current path
-
-`quit` `exit` Quits the CLI
-
-## Example
-
-```ruby
 require 'sandbox'
 
 # Create a new shell instance
@@ -106,7 +46,7 @@ context_fruit.add_command(
   :apple,
   description: 'Apple'
 ) do |shell, context, tokens|
-  shell.puts("I'm an apple!")
+  shell.puts("I'm and apple!")
 end
 
 # You can define aliases for your command
@@ -136,4 +76,3 @@ shell.remove_context(:useless)
 
 # Run the shell
 shell.run
-```
