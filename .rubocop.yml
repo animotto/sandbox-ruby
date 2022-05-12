@@ -10,3 +10,6 @@ AllCops:
 
 Metrics:
   Enabled: false
+
+Gemspec/RequireMFA:
+  Enabled: false
