@@ -134,6 +134,12 @@ shell.context(:useless).add_command(:test)
 shell.context(:useless).remove_command(:test)
 shell.remove_context(:useless)
 
+# The confirmation
+shell.add_command(:confirm) do |tokens, shell, context, command|
+  answer = shell.confirm('Do you confirm it?')
+  shell.puts(answer ? 'Yes' : 'No')
+end
+
 # Run the shell
 shell.run
 ```

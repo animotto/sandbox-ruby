@@ -3,6 +3,8 @@
 require 'readline'
 require 'shellwords'
 
+CONFIRM_LIST = %i[y n].freeze
+
 module Sandbox
   ##
   # Shell
@@ -15,22 +17,31 @@ module Sandbox
 
     ##
     # Creates a new shell
-    def initialize(input = $stdin, output = $stdout, **options)
+    def initialize(
+      input = $stdin,
+      output = $stdout,
+      prompt: DEFAULT_PROMPT,
+      banner: DEFAULT_BANNER,
+      history: true,
+      builtin_help: true,
+      builtin_quit: true,
+      builtin_path: true
+    )
       @input = input
       @output = output
-      @history = options.fetch(:history, true)
+      @history = history
 
-      @prompt = options.fetch(:prompt, DEFAULT_PROMPT)
-      @banner = options.fetch(:banner, DEFAULT_BANNER)
+      @prompt = prompt
+      @banner = banner
 
       @root = Context.new(:root, self)
       @path = []
       @running = false
       @reading = false
 
-      add_command_help if options.fetch(:builtin_help, true)
-      add_command_quit if options.fetch(:builtin_quit, true)
-      add_command_path if options.fetch(:builtin_path, true)
+      add_command_help if builtin_help
+      add_command_quit if builtin_quit
+      add_command_path if builtin_path
     end
 
     ##
@@ -96,6 +107,31 @@ module Sandbox
       @output.print("\e[0G\e[J") if @reading
       @output.puts(data)
       Readline.refresh_line if @reading
+    end
+
+    ##
+    # Requests the confirmation
+    def confirm(prompt, default: :n)
+      list = CONFIRM_LIST.join('/')
+      raise ShellError, "Default should be #{list}" unless CONFIRM_LIST.include?(default)
+
+      prompt = "#{prompt} (#{list}) [#{default}] "
+      loop do
+        line = readline(prompt, @history)
+
+        if line.nil?
+          puts
+          return
+        end
+
+        line.strip!
+        line.downcase!
+        return default == CONFIRM_LIST.first if line.empty?
+
+        next unless CONFIRM_LIST.map(&:to_s).include?(line)
+
+        return line == CONFIRM_LIST.first.to_s
+      end
     end
 
     ##
