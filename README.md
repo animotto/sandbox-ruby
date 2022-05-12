@@ -79,7 +79,7 @@ command_counter = shell.add_command(
   :counter,
   description: 'Counter',
   params: ['<n>'] # Mandatory parameter
-) do |shell, context, tokens|
+) do |tokens, shell, context, command|
   n = tokens[1].to_i
   n.times { |i| shell.print("#{i + 1} ") }
   shell.puts
@@ -96,7 +96,7 @@ shell.add_command(
   description: 'Echo',
   params: ['[text]'], # Optional parameter
   global: true
-) do |shell, context, tokens|
+) do |tokens, shell, context, command|
   shell.puts(tokens[1..].join(' '))
 end
 
@@ -105,7 +105,7 @@ context_fruit = shell.add_context(:fruit, description: 'Fruits')
 context_fruit.add_command(
   :apple,
   description: 'Apple'
-) do |shell, context, tokens|
+) do |tokens, shell, context, command|
   shell.puts("I'm and apple!")
 end
 
@@ -114,17 +114,17 @@ context_fruit.add_command(
   :orange,
   description: 'Orange or tangerine',
   aliases: [:tangerine]
-) do |shell, context, tokens|
+) do |tokens, shell, context, command|
   shell.puts("Sometimes i'm an orange or a tangerine")
 end
 
 # You can use search path for context and command
 shell.add_context(:vegetable, description: 'Vegetables')
 shell.context(:vegetable).add_context(:tasty)
-shell.context(:vegetable, :tasty).add_command(:potato) do |shell, context, tokens|
+shell.context(:vegetable, :tasty).add_command(:potato) do |tokens, shell, context, command|
   shell.puts('Yammy!')
 end
-shell.command(:vegetable, :tasty, :potato).completion do |shell, tokens, line|
+shell.command(:vegetable, :tasty, :potato).completion do |line, tokens, shell, context, command|
   %w[one two]
 end
 

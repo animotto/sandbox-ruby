@@ -41,7 +41,7 @@ module Sandbox
         return
       end
 
-      @block&.call(@shell, @context, tokens)
+      @block&.call(tokens, @shell, @context, self)
     end
 
     ##

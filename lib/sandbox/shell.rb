@@ -157,14 +157,15 @@ module Sandbox
     def completion_proc(line)
       tokens = split_tokens(Readline.line_buffer)
 
+      context = @root.context(*@path)
       commands = []
-      commands += @root.context(*@path).contexts
-      commands += @root.context(*@path).commands
+      commands += context.contexts
+      commands += context.commands
       commands += @root.commands.select(&:global?) unless @path.empty?
 
       command = commands.detect { |c| c.instance_of?(Command) && c.match?(tokens.first) }
       list = commands.map(&:name)
-      list = command.completion_proc&.call(self, tokens, line) unless command.nil?
+      list = command.completion_proc&.call(line, tokens, self, context, command) unless command.nil?
 
       list&.grep(/^#{Regexp.escape(line)}/)
     end
@@ -176,7 +177,7 @@ module Sandbox
         aliases: ['?'],
         description: 'This help',
         global: true
-      ) do |shell, _context, tokens|
+      ) do |tokens, shell|
         list = []
         list += @root.commands.select(&:global?) unless @path.empty?
         list += @root.context(*@path).commands
@@ -226,7 +227,7 @@ module Sandbox
         aliases: [:exit],
         description: 'Quit',
         global: true
-      ) do |shell|
+      ) do |_tokens, shell|
         shell.stop
       end
     end
@@ -237,7 +238,7 @@ module Sandbox
         :path,
         description: 'Show path',
         global: true
-      ) do |shell|
+      ) do |_tokens, shell|
         shell.puts(shell.formatted_path)
       end
     end
